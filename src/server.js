@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require("cors");
 const fs = require('fs');
 const path = require('path');
 const { DateTime } = require('luxon');
@@ -15,6 +16,8 @@ const TZ = process.env.TZ || 'Asia/Kolkata';
 const DATA_FILE = path.join(__dirname, '..', 'data', 'entries.json');
 const CAL_FILE = path.join(__dirname, '..', 'calendars', 'tatkal-events.ics');
 const app = express();
+// Allow all origins (you can restrict to your frontend domain)
+app.use(cors());
 // middleware to parse JSON
 app.use(express.json());
 
