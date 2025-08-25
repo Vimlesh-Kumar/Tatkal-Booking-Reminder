@@ -1,0 +1,25 @@
+{
+  "name": "tatkal-agent",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "ics": "^3.8.1",
+    "luxon": "^3.7.1",
+    "node-fetch": "^2.7.0",
+    "node-notifier": "^10.0.1",
+    "node-schedule": "^2.1.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "twilio": "^5.8.0",
+    "winston": "^3.17.0"
+  }
+}
