@@ -15,6 +15,14 @@ const PORT = process.env.PORT || 4567;
 const TZ = process.env.TZ || 'Asia/Kolkata';
 const DATA_FILE = path.join(__dirname, '..', 'data', 'entries.json');
 const CAL_FILE = path.join(__dirname, '..', 'calendars', 'tatkal-events.ics');
+
+// Ensure directories exist
+const dataDir = path.dirname(DATA_FILE);
+const calDir = path.dirname(CAL_FILE);
+
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+if (!fs.existsSync(calDir)) fs.mkdirSync(calDir, { recursive: true });
+
 const app = express();
 // Allow all origins (you can restrict to your frontend domain)
 app.use(cors());
@@ -76,12 +84,12 @@ function scheduleForEntry(entry, whatsappTo) {
         async (e) => {
             const body = `T-10 min: ${e.train} ${e.from}->${e.to} ${e.class} on ${e.date}\nOpen IRCTC now.`;
             logger.info(`[NOTIFY] Sending T-10 WhatsApp for Train=${e.train}`);
-            // await sendTelegram(whatsappTo || process.env.WHATSAPP_TO, body);
+            await sendTelegram(whatsappTo, body);
         },
         async (e) => {
             const body = `T-0: Tatkal open for ${e.train} ${e.from}->${e.to} ${e.class} on ${e.date}. Proceed!`;
             logger.info(`[NOTIFY] Sending T-0 WhatsApp for Train=${e.train}`);
-            // await sendTelegram(whatsappTo || process.env.WHATSAPP_TO, body);
+            await sendTelegram(whatsappTo, body);
         }
     );
 
@@ -121,7 +129,7 @@ app.post('/api/tatkal', async (req, res) => {
     // schedule jobs + send immediate confirmation
     const enriched = scheduleForEntry(entry, entry.whatsappTo);
     const confirmMsg = summarize(enriched);
-    await sendTelegram(entry || process.env.WHATSAPP_TO, confirmMsg);
+    await sendTelegram(entry.whatsappTo, entry);
 
     // rewrite ICS for all
     const all = loadDB().map(e => {
@@ -138,6 +146,10 @@ app.get('/api/list', (req, res) => {
     const db = loadDB();
     logger.debug(`[API] Returning ${db.length} entries`);
     res.json({ ok: true, entries: db });
+});
+
+app.get('/api/health', (req, res) => {
+    res.status(200).send('OK');
 });
 
 app.delete('/api/tatkal/:id', (req, res) => {
@@ -173,6 +185,31 @@ app.listen(PORT, () => {
     logger.info(`🚆 Tatkal Agent running on http://localhost:${PORT}`);
     logger.info(`Timezone: ${TZ}`);
     if (!process.env.TWILIO_ACCOUNT_SID) {
-        logger.warn('⚠️ WhatsApp credentials missing; messages will not be sent.');
+        // Just a warning, not critical if using Telegram
+        logger.debug('Note: Twilio SID not found (using Telegram mainly).');
     }
+
+    // Restore scheduled jobs from disk
+    restoreScheduledJobs();
 });
+
+function restoreScheduledJobs() {
+    const db = loadDB();
+    const now = DateTime.now().setZone(TZ);
+    let count = 0;
+
+    db.forEach(entry => {
+        // Only schedule if the booking time (T-0) is in the future
+        // or if T-0 is past but we want to keep it in memory (though pointless for notifications)
+        // Let's being loose: re-schedule everything. The scheduler handles "past" checks.
+
+        // Actually, let's peek to avoid spamming logs for old entries
+        const t0 = tatkalMomentISO(entry.date, entry.tatkalType, TZ);
+        if (t0 > now.minus({ hours: 1 })) { // Keep if it's recent or future
+            scheduleForEntry(entry, entry.whatsappTo);
+            count++;
+        }
+    });
+
+    logger.info(`[INIT] Restored ${count} active Tatkal reminders from disk.`);
+}

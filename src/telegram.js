@@ -10,12 +10,28 @@ if (!token || !chatId) {
 
 const bot = new TelegramBot(token, { polling: false });
 
-async function sendTelegram(message) {
-  if (!token || !chatId) return { ok: false, reason: 'no-credentials' };
+/**
+ * Send a Telegram message.
+ * @param {string|null} recipient - The chat ID to send to. If null, uses env TELEGRAM_CHAT_ID.
+ * @param {string|object} data - The message string or booking object to format.
+ */
+async function sendTelegram(recipient, data) {
+  const targetId = recipient || chatId;
+  if (!token || !targetId) {
+    console.warn('[TELEGRAM] Missing credentials or recipient');
+    return { ok: false, reason: 'no-credentials-or-recipient' };
+  }
+
   try {
-    const booking = formatBookingMessage(message);
-    await bot.sendMessage(chatId, booking, { parse_mode: 'Markdown' });
-    console.log('[TELEGRAM] Message sent');
+    let text;
+    if (typeof data === 'string') {
+      text = data;
+    } else {
+      text = formatBookingMessage(data);
+    }
+
+    await bot.sendMessage(targetId, text, { parse_mode: 'Markdown' });
+    console.log(`[TELEGRAM] Message sent to ${targetId}`);
     return { ok: true };
   } catch (err) {
     console.error('[TELEGRAM] Failed to send message:', err.message);
@@ -32,13 +48,15 @@ function formatBookingMessage(data) {
   msg += `⚡ Tatkal Type: *${data.tatkalType}*\n\n`;
 
   msg += `👥 *Passengers:*\n`;
-  data.passengers.forEach((p, i) => {
-    msg += `\n${i + 1}. *${p.name}* (${p.age}, ${p.gender})\n`;
-    msg += `   Berth: ${p.berth || "-"}\n`;
-    if (p.idType && p.idNumber) {
-      msg += `   ID: ${p.idType} - ${p.idNumber}\n`;
-    }
-  });
+  if (Array.isArray(data.passengers)) {
+    data.passengers.forEach((p, i) => {
+      msg += `\n${i + 1}. *${p.name}* (${p.age}, ${p.gender})\n`;
+      msg += `   Berth: ${p.berth || "-"}\n`;
+      if (p.idType && p.idNumber) {
+        msg += `   ID: ${p.idType} - ${p.idNumber}\n`;
+      }
+    });
+  }
 
   return msg;
 }

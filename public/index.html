@@ -653,6 +653,7 @@ pre {
       class: fd.get('class'),
       tatkalType: fd.get('tatkalType'),
       passengers,
+      whatsappTo: telegramTo || whatsappTo || null, // Map telegram/whatsapp to backend field
       notifications: {
         whatsapp: whatsappTo || null,
         telegram: telegramTo || null
@@ -666,7 +667,7 @@ pre {
 
     // === send to backend ===
     try {
-      const res = await fetch("http://localhost:4567/api/tatkal", {
+      const res = await fetch("/api/tatkal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
