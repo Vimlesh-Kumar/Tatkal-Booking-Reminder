@@ -7,7 +7,7 @@ const { DateTime } = require('luxon');
 const winston = require('winston');   // ✅ structured logger
 const { tatkalMomentISO, formatLocal, safeParseJSON } = require('./util');
 const { scheduleJobs, writeICS } = require('./reminders');
-// const { sendWhatsApp } = require('./whatsapp');
+const { sendWhatsApp } = require('./whatsapp');
 const { sendTelegram } = require('./telegram');
 
 
@@ -69,12 +69,36 @@ T-0 : ${formatLocal(entry.t0)}
 const JOBS = new Map();
 
 /* ---------------- Schedulers ---------------- */
-function scheduleForEntry(entry, whatsappTo) {
+function normalizeNotifications(entry) {
+    const legacyRecipient = entry.whatsappTo || null;
+    const notifications = entry.notifications && typeof entry.notifications === 'object'
+        ? { whatsapp: entry.notifications.whatsapp || null, telegram: entry.notifications.telegram || null }
+        : { whatsapp: null, telegram: null };
+
+    // Backwards compatibility: older clients used "whatsappTo" for Telegram.
+    if (!notifications.whatsapp && !notifications.telegram && legacyRecipient) {
+        notifications.telegram = legacyRecipient;
+    }
+
+    return notifications;
+}
+
+async function notifyAll(notifications, message) {
+    const tasks = [];
+    if (notifications.whatsapp) tasks.push(sendWhatsApp(notifications.whatsapp, message));
+    if (notifications.telegram) tasks.push(sendTelegram(notifications.telegram, message));
+    if (tasks.length === 0) return { ok: false, reason: 'no-recipients' };
+    await Promise.all(tasks);
+    return { ok: true };
+}
+
+function scheduleForEntry(entry) {
     const now = DateTime.now().setZone(TZ);
     const t0 = tatkalMomentISO(entry.date, entry.tatkalType, TZ);
     const preOpen = t0.minus({ minutes: 10 });
 
     const enriched = { ...entry, now, t0, preOpen };
+    const notifications = normalizeNotifications(entry);
 
     logger.info(`[SCHEDULER] Scheduling Tatkal job for Train=${entry.train} Date=${entry.date} Type=${entry.tatkalType}`);
 
@@ -83,13 +107,13 @@ function scheduleForEntry(entry, whatsappTo) {
         enriched,
         async (e) => {
             const body = `T-10 min: ${e.train} ${e.from}->${e.to} ${e.class} on ${e.date}\nOpen IRCTC now.`;
-            logger.info(`[NOTIFY] Sending T-10 WhatsApp for Train=${e.train}`);
-            await sendTelegram(whatsappTo, body);
+            logger.info(`[NOTIFY] Sending T-10 alerts for Train=${e.train}`);
+            await notifyAll(notifications, body);
         },
         async (e) => {
             const body = `T-0: Tatkal open for ${e.train} ${e.from}->${e.to} ${e.class} on ${e.date}. Proceed!`;
-            logger.info(`[NOTIFY] Sending T-0 WhatsApp for Train=${e.train}`);
-            await sendTelegram(whatsappTo, body);
+            logger.info(`[NOTIFY] Sending T-0 alerts for Train=${e.train}`);
+            await notifyAll(notifications, body);
         }
     );
 
@@ -110,6 +134,13 @@ app.post('/api/tatkal', async (req, res) => {
 
     const db = loadDB();
     const id = 'T' + Date.now();
+    const notifications = body.notifications && typeof body.notifications === 'object'
+        ? {
+            whatsapp: body.notifications.whatsapp || null,
+            telegram: body.notifications.telegram || null
+        }
+        : { whatsapp: null, telegram: null };
+
     const entry = {
         id,
         date: body.date,
@@ -119,7 +150,8 @@ app.post('/api/tatkal', async (req, res) => {
         class: body.class,
         tatkalType: body.tatkalType.toUpperCase(),
         passengers: body.passengers,
-        whatsappTo: body.whatsappTo || null
+        whatsappTo: body.whatsappTo || null,
+        notifications
     };
     db.push(entry);
     saveDB(db);
@@ -127,9 +159,9 @@ app.post('/api/tatkal', async (req, res) => {
     logger.info(`[DB] Entry saved with id=${id}`);
 
     // schedule jobs + send immediate confirmation
-    const enriched = scheduleForEntry(entry, entry.whatsappTo);
+    const enriched = scheduleForEntry(entry);
     const confirmMsg = summarize(enriched);
-    await sendTelegram(entry.whatsappTo, entry);
+    await notifyAll(normalizeNotifications(entry), entry);
 
     // rewrite ICS for all
     const all = loadDB().map(e => {
@@ -175,6 +207,7 @@ app.delete('/api/tatkal/:id', (req, res) => {
 });
 
 /* ---------------- Serve UI ---------------- */
+app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get('/', (req, res) => {
     logger.debug(`[UI] Serving index.html`);
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
@@ -206,7 +239,7 @@ function restoreScheduledJobs() {
         // Actually, let's peek to avoid spamming logs for old entries
         const t0 = tatkalMomentISO(entry.date, entry.tatkalType, TZ);
         if (t0 > now.minus({ hours: 1 })) { // Keep if it's recent or future
-            scheduleForEntry(entry, entry.whatsappTo);
+            scheduleForEntry(entry);
             count++;
         }
     });

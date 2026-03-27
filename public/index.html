@@ -1,705 +1,862 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Tatkal Agent – Schedule Booking Reminders</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="api-base" content="">
+  <title>Tatkal Agent – Schedule Booking Reminders</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f4f1;
+      --ink: #101828;
+      --muted: #667085;
+      --card: #ffffff;
+      --primary: #0c6b5a;
+      --primary-600: #0a5b4d;
+      --accent: #ff7a59;
+      --accent-600: #eb5f40;
+      --line: #e4e7ec;
+      --shadow: 0 20px 50px rgba(16, 24, 40, 0.08);
+      --radius: 18px;
+    }
 
-<style>
-/* Global Styles */
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  margin: 0;
-  padding: 20px;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.6;
-  background: #f5f7fa;
-  color: #333;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-/* Typography */
-h1, h3 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 30px;
-  margin-top: 20px;
-}
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 20% 20%, #fff1e6 0%, rgba(255, 241, 230, 0) 50%),
+        radial-gradient(circle at 85% 10%, #e7f9f5 0%, rgba(231, 249, 245, 0) 55%),
+        var(--bg);
+      min-height: 100vh;
+    }
 
-h1 {
-  font-size: 2.2em;
-  margin-bottom: 10px;
-}
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
 
-/* Info Banner */
-.info-banner {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-  text-align: center;
-}
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      align-items: center;
+      margin-bottom: 28px;
+    }
 
-.info-banner h2 {
-  margin: 0 0 10px;
-  font-size: 1.3em;
-}
+    .hero h1 {
+      font-size: clamp(2rem, 3.2vw, 3rem);
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+    }
 
-.info-banner p {
-  margin: 8px 0;
-  opacity: 0.95;
-}
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
 
-.reminder-timeline {
-  background: #e8f4fd;
-  border: 2px solid #3498db;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 20px 0;
-}
+    .hero-card {
+      background: var(--card);
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+    }
 
-.reminder-timeline h4 {
-  color: #2980b9;
-  margin: 0 0 15px;
-  font-size: 1.1em;
-}
+    .hero-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
 
-.timeline-item {
-  display: flex;
-  align-items: center;
-  margin: 12px 0;
-  padding: 8px;
-  background: white;
-  border-radius: 6px;
-}
+    .hero-card .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #eaf8f4;
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
 
-.timeline-icon {
-  background: #3498db;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
 
-.timeline-content {
-  flex-grow: 1;
-}
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      padding: 28px;
+    }
 
-.timeline-time {
-  font-weight: 600;
-  color: #2980b9;
-}
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
 
-.timeline-desc {
-  font-size: 14px;
-  color: #666;
-  margin-top: 2px;
-}
+    .card-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
 
-/* Form Container */
-form {
-  background: white;
-  padding: 32px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  margin-bottom: 30px;
-}
+    .badge {
+      background: #fff6f1;
+      color: var(--accent-600);
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
 
-/* Required field indicator */
-.required::after {
-  content: " *";
-  color: #e74c3c;
-  font-weight: bold;
-}
+    .timeline {
+      display: grid;
+      gap: 14px;
+    }
 
-/* Label Styles */
-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  margin-top: 4px;
-  color: #555;
-}
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px dashed #cfe7df;
+      background: #f4fbf9;
+    }
 
-/* Input Styles */
-input, select, textarea {
-  width: 100%;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
-  transition: all 0.3s ease;
-  background: #fff;
-  box-sizing: border-box;
-}
+    .timeline-time {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
 
-input:focus, select:focus, textarea:focus {
-  border-color: #3498db;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
+    .timeline-desc {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
 
-input:hover, select:hover {
-  border-color: #bdc3c7;
-}
+    form {
+      display: grid;
+      gap: 22px;
+    }
 
-/* Required field styling */
-input:required, select:required {
-  border-left: 4px solid #e67e22;
-}
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
 
-input:required:valid, select:required:valid {
-  border-left: 4px solid #27ae60;
-}
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
 
-/* Small text under inputs */
-small {
-  display: block;
-  color: #7f8c8d;
-  font-size: 12px;
-  margin-top: -15px;
-  margin-bottom: 15px;
-  padding-left: 4px;
-}
+    .required::after {
+      content: " *";
+      color: var(--accent-600);
+      font-weight: 700;
+    }
 
-/* Grid Layout */
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
-}
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      background: #fff;
+    }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 16px;
-}
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(12, 107, 90, 0.15);
+    }
 
-/* Button Styles */
-button {
-  padding: 14px 24px;
-  border-radius: 8px;
-  border: none;
-  background: #3498db;
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 12px;
-  margin-bottom: 8px;
-  font-family: inherit;
-}
+    small {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
 
-button:hover {
-  background: #2980b9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-}
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
 
-#addPassenger {
-  background: #27ae60;
-  margin-bottom: 20px;
-}
+    .section-title {
+      margin: 0;
+      font-size: 1.1rem;
+    }
 
-#addPassenger:hover {
-  background: #229954;
-}
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 22px;
+    }
 
-/* Passenger Cards */
-.passenger-card {
-  border: 2px solid #e8ecef;
-  border-radius: 12px;
-  padding: 24px;
-  margin: 24px 0;
-  background: #fafbfc;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  transition: box-shadow 0.3s ease;
-}
+    .passenger-card {
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      padding: 20px;
+      background: #fcfcfd;
+      display: grid;
+      gap: 16px;
+    }
 
-.passenger-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-}
+    .passenger-card h4 {
+      margin: 0;
+      font-size: 1rem;
+    }
 
-.passenger-card h4 {
-  margin: 0 0 20px;
-  font-size: 1.2em;
-  color: #2c3e50;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #ecf0f1;
-}
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
 
-/* Remove Button */
-.remove-btn {
-  background: #e74c3c;
-  margin-top: 16px;
-  padding: 10px 20px;
-}
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-.remove-btn:hover {
-  background: #c0392b;
-}
+    button {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
 
-/* Notification Section */
-.notification-section {
-  background: #f8f9fc;
-  border: 2px solid #6c63ff;
-  border-radius: 10px;
-  padding: 20px;
-  margin-top: 32px;
-}
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      width: 100%;
+      font-size: 1rem;
+    }
 
-.notification-section h4 {
-  color: #6c63ff;
-  margin: 0 0 15px;
-  display: flex;
-  align-items: center;
-}
+    .btn-primary:hover {
+      background: var(--primary-600);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 25px rgba(12, 107, 90, 0.2);
+    }
 
-.notification-section h4::before {
-  content: "📢";
-  margin-right: 8px;
-}
+    .btn-secondary {
+      background: #eef2f1;
+      color: var(--primary);
+    }
 
-.notification-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 16px;
-}
+    .btn-secondary:hover {
+      background: #dde6e3;
+    }
 
-.whatsapp-input {
-  border-left: 4px solid #25D366;
-}
+    .btn-danger {
+      background: #ffe9e6;
+      color: #c13a2c;
+    }
 
-.telegram-input {
-  border-left: 4px solid #0088cc;
-}
+    .btn-danger:hover {
+      background: #ffd7d1;
+    }
 
-/* Submit button */
-button[type="submit"] {
-  background: #e67e22;
-  width: 100%;
-  padding: 16px;
-  font-size: 16px;
-  margin-top: 24px;
-}
+    .notification-box {
+      border-radius: 16px;
+      border: 1px solid #e9e2ff;
+      padding: 18px;
+      background: #fbf9ff;
+      display: grid;
+      gap: 12px;
+    }
 
-button[type="submit"]:hover {
-  background: #d35400;
-}
+    .preview {
+      border-radius: 16px;
+      border: 1px dashed #f0c6b8;
+      background: #fff7f3;
+      padding: 16px;
+      display: none;
+      margin-top: 10px;
+    }
 
-/* Result Section */
-pre {
-  background: #1e1e1e;
-  color: #00ff99;
-  padding: 20px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin-top: 20px;
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 14px;
-  line-height: 1.4;
-}
+    pre {
+      background: #0f172a;
+      color: #b8f7d4;
+      padding: 18px;
+      border-radius: 16px;
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+      overflow-x: auto;
+    }
 
-/* Alert for no notification method */
-.no-notification-alert {
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  color: #856404;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  display: none;
-}
+    .footer-note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  body {
-    padding: 15px;
-  }
-  
-  form {
-    padding: 24px;
-  }
-  
-  .row, .grid, .notification-row {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  input, select {
-    padding: 14px;
-    font-size: 16px;
-  }
+    .response-panel {
+      border-radius: 16px;
+      border: 1px solid #d9e6f5;
+      background: linear-gradient(135deg, #f7fbff 0%, #ffffff 60%);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
 
-  .timeline-item {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .timeline-icon {
-    margin-right: 0;
-    margin-bottom: 8px;
-  }
-}
-</style>
+    .response-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-<h1>🚂 Tatkal Booking Reminder</h1>
+    .response-status {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: #e7eef8;
+      color: #1f3b63;
+    }
 
-<div class="info-banner">
-  <h2>Smart Tatkal Reminders</h2>
-  <p>Get perfectly timed WhatsApp & Telegram alerts for your train booking</p>
-  <p><strong>T-10:</strong> 10 minutes before booking opens • <strong>T-0:</strong> Booking window opens</p>
-</div>
+    .status-idle { background: #eef2f7; color: #425466; }
+    .status-pending { background: #fff1d6; color: #8a4b12; }
+    .status-success { background: #e7f7ec; color: #0f6b3e; }
+    .status-error { background: #ffe6e3; color: #9b2c1b; }
 
-<form id="f">
-  <div class="reminder-timeline">
-    <h4>📅 How Your Reminders Work</h4>
-    <div class="timeline-item">
-      <div class="timeline-icon">T-10</div>
-      <div class="timeline-content">
-        <div class="timeline-time">10 Minutes Before Booking</div>
-        <div class="timeline-desc">Get ready alert via WhatsApp/Telegram - prepare your IRCTC login and passenger details</div>
-      </div>
-    </div>
-    <div class="timeline-item">
-      <div class="timeline-icon">T-0</div>
-      <div class="timeline-content">
-        <div class="timeline-time">Booking Window Opens</div>
-        <div class="timeline-desc">Immediate alert when Tatkal booking starts (10:00 AM for AC, 11:00 AM for Non-AC)</div>
-      </div>
-    </div>
-  </div>
+    .response-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
 
-  <div class="row">
-    <div>
-      <label class="required">📅 Date of Journey</label>
-      <input type="date" name="date" required id="dateInput">
-      <small>Tatkal opens 1 day before journey date</small>
-    </div>
-    <div>
-      <label class="required">⏰ Tatkal Type</label>
-      <select name="tatkalType" id="tatkalTypeSelect" required>
-        <option value="">Select Tatkal Type</option>
-        <option value="AC">AC Tatkal (Opens 10:00 AM)</option>
-        <option value="NONAC">Non-AC Tatkal (Opens 11:00 AM)</option>
-      </select>
-    </div>
-  </div>
+    .response-body {
+      display: grid;
+      gap: 8px;
+    }
 
-  <div class="row">
-    <div>
-      <label class="required">🚂 Train Number</label>
-      <input name="train" id="trainInput" required placeholder="12345">
-      <small id="trainName"></small>
-    </div>
-    <div>
-      <label class="required">🎫 Class</label>
-      <select name="class" required>
-        <option value="">Select Class</option>
-        <option value="1A">First AC (1A)</option>
-        <option value="2A">Second AC (2A)</option>
-        <option value="3A">Third AC (3A)</option>
-        <option value="SL">Sleeper (SL)</option>
-        <option value="CC">Chair Car (CC)</option>
-      </select>
-    </div>
-  </div>
+    .response-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid #e9eef5;
+      font-size: 0.95rem;
+    }
 
-  <div class="row">
-    <div>
-      <label class="required">🚉 From (Station Code)</label>
-      <input name="from" id="fromInput" required placeholder="NDLS" style="text-transform: uppercase">
-      <small>Enter IRCTC station code (e.g., NDLS for New Delhi)</small>
-    </div>
-    <div>
-      <label class="required">🏁 To (Station Code)</label>
-      <input name="to" id="toInput" required placeholder="HWH" style="text-transform: uppercase">
-      <small>Enter IRCTC station code (e.g., HWH for Howrah)</small>
-    </div>
-  </div>
+    .response-json {
+      margin-top: 8px;
+    }
 
-  <h3>👥 Passengers (Max 4 for Tatkal)</h3>
-  <div id="passengers"></div>
-  <button type="button" id="addPassenger">+ Add Passenger</button>
+    .response-json summary {
+      cursor: pointer;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
 
-  <div class="notification-section">
-    <h4>Notification Preferences (Optional)</h4>
-    <div class="no-notification-alert" id="noNotificationAlert">
-      ⚠️ Note: Without notification settings, you won't receive any reminders. At least one notification method is recommended.
-    </div>
-    
-    <div class="notification-row">
+    .toast-stack {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: grid;
+      gap: 10px;
+      z-index: 200;
+      max-width: min(360px, 92vw);
+    }
+
+    .toast {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      border: 1px solid #e6edf5;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+      display: grid;
+      gap: 6px;
+      animation: toast-in 0.35s ease;
+    }
+
+    .toast-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .toast-body {
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .toast-success { border-color: #cfead9; }
+    .toast-error { border-color: #ffd2cc; }
+    .toast-info { border-color: #d9e6f5; }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+      .row, .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
       <div>
-        <label>📱 WhatsApp Number</label>
-        <input name="whatsappTo" class="whatsapp-input" placeholder="whatsapp:+919876543210">
-        <small>Format: whatsapp:+91XXXXXXXXXX</small>
+        <h1>Tatkal Booking Reminders</h1>
+        <p>Schedule precision alerts for your Tatkal window. Get the T-10 nudge and the T-0 booking start notification, right on time.</p>
       </div>
-      <div>
-        <label>📨 Telegram Chat ID</label>
-        <input name="telegramTo" class="telegram-input" placeholder="@username or chat_id">
-        <small>Your Telegram username (@username) or chat ID</small>
+      <div class="hero-card">
+        <div class="pill">Smart timing</div>
+        <h2>Your reminder flow</h2>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-time">T-10</div>
+            <div class="timeline-desc">Get a readiness alert 10 minutes before Tatkal opens.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-time">T-0</div>
+            <div class="timeline-desc">Receive the booking open alert at 10:00 AM for AC or 11:00 AM for Non-AC.</div>
+          </div>
+        </div>
       </div>
+    </header>
+
+    <div class="main-grid">
+      <section class="card">
+        <div class="card-header">
+          <h3>Journey Details</h3>
+          <span class="badge">Required</span>
+        </div>
+        <form id="f">
+        <div class="row">
+          <div>
+            <label class="required" for="dateInput">Date of Journey</label>
+            <input type="date" name="date" required id="dateInput">
+            <small>Tatkal opens one day before the journey date.</small>
+          </div>
+          <div>
+            <label class="required" for="tatkalTypeSelect">Tatkal Type</label>
+            <select name="tatkalType" id="tatkalTypeSelect" required>
+              <option value="">Select Tatkal Type</option>
+              <option value="AC">AC Tatkal (opens 10:00 AM)</option>
+              <option value="NONAC">Non-AC Tatkal (opens 11:00 AM)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label class="required" for="trainInput">Train Number</label>
+            <input name="train" id="trainInput" required placeholder="12345">
+            <small id="trainName"></small>
+          </div>
+          <div>
+            <label class="required">Class</label>
+            <select name="class" required>
+              <option value="">Select Class</option>
+              <option value="1A">First AC (1A)</option>
+              <option value="2A">Second AC (2A)</option>
+              <option value="3A">Third AC (3A)</option>
+              <option value="SL">Sleeper (SL)</option>
+              <option value="CC">Chair Car (CC)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label class="required" for="fromInput">From (Station Code)</label>
+            <input name="from" id="fromInput" required placeholder="NDLS" style="text-transform: uppercase">
+            <small>Enter IRCTC station code, e.g. NDLS for New Delhi.</small>
+          </div>
+          <div>
+            <label class="required" for="toInput">To (Station Code)</label>
+            <input name="to" id="toInput" required placeholder="HWH" style="text-transform: uppercase">
+            <small>Enter IRCTC station code, e.g. HWH for Howrah.</small>
+          </div>
+        </div>
+
+        <div class="preview" id="reminderPreview">
+          <strong>Your reminder schedule</strong>
+          <div id="scheduleDetails" class="hint"></div>
+        </div>
+
+        <div class="card-header" style="margin-top: 6px;">
+          <h3>Passenger Details</h3>
+          <span class="badge">Max 4</span>
+        </div>
+        <div id="passengers"></div>
+        <div class="actions">
+          <button type="button" class="btn-secondary" id="addPassenger">Add Passenger</button>
+        </div>
+
+        <div class="notification-box">
+          <div class="card-header" style="margin-bottom: 8px;">
+            <h3>Notifications</h3>
+          </div>
+          <div class="row">
+            <div>
+              <label for="whatsappTo">WhatsApp Number</label>
+              <input name="whatsappTo" id="whatsappTo" placeholder="whatsapp:+919876543210">
+              <small>Format: whatsapp:+91XXXXXXXXXX</small>
+            </div>
+            <div>
+              <label for="telegramTo">Telegram Chat ID</label>
+              <input name="telegramTo" id="telegramTo" placeholder="@username or chat_id">
+              <small>Your Telegram username or chat ID.</small>
+            </div>
+          </div>
+          <div class="footer-note">Add WhatsApp or Telegram to receive T-10 and T-0 reminders.</div>
+        </div>
+
+          <button type="submit" class="btn-primary">Schedule Tatkal Reminders</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h3>System Response</h3>
+          <span class="badge">Live</span>
+        </div>
+        <div class="response-panel" id="responsePanel">
+          <div class="response-header">
+            <span class="response-status status-idle" id="responseStatus">Idle</span>
+            <span class="response-meta" id="responseMeta">Fill the form to schedule reminders.</span>
+          </div>
+          <div class="response-body" id="responseBody">
+            <div class="response-item">Waiting for submission.</div>
+          </div>
+          <details class="response-json">
+            <summary>Payload preview</summary>
+            <pre id="out"></pre>
+          </details>
+        </div>
+      </section>
     </div>
-    
-    <small style="color: #666; font-style: italic;">
-      💡 You can provide either WhatsApp or Telegram or both. Leave blank if you don't want notifications.
-    </small>
   </div>
 
-  <button type="submit">🔔 Schedule My Tatkal Reminders</button>
-</form>
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
-<div id="reminderPreview" style="display:none; background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
-  <h4 style="color: #856404;">📋 Your Reminder Schedule</h4>
-  <div id="scheduleDetails"></div>
-</div>
+  <script>
+    const apiMeta = document.querySelector('meta[name="api-base"]');
+    const apiBaseFromMeta = apiMeta && apiMeta.content ? apiMeta.content.trim() : '';
+    const apiBaseFromQuery = new URLSearchParams(window.location.search).get('api') || '';
+    const apiBaseFromStorage = window.localStorage.getItem('tatkal_api_base') || '';
+    const API_BASE = (apiBaseFromQuery || apiBaseFromMeta || apiBaseFromStorage || '').replace(/\/$/, '');
+    if (apiBaseFromQuery) {
+      window.localStorage.setItem('tatkal_api_base', API_BASE);
+    }
 
-<h3>📱 System Response</h3>
-<pre id="out"></pre>
+    const dateInput = document.getElementById('dateInput');
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 30);
+    dateInput.min = today.toISOString().split('T')[0];
+    dateInput.max = maxDate.toISOString().split('T')[0];
 
-<script>
-  // ====== Date: restrict to today → +30 days ======
-  const dateInput = document.getElementById('dateInput');
-  const today = new Date();
-  const maxDate = new Date();
-  maxDate.setDate(today.getDate() + 30);
-  dateInput.min = today.toISOString().split('T')[0];
-  dateInput.max = maxDate.toISOString().split('T')[0];
+    function getTatkalTimes(tatkalType) {
+      const bookingTime = tatkalType === 'AC' ? '10:00 AM' : '11:00 AM';
+      const reminderTime = tatkalType === 'AC' ? '9:50 AM' : '10:50 AM';
+      return { bookingTime, reminderTime };
+    }
 
-  // ====== Show reminder schedule when date/type changes ======
-  function updateReminderSchedule() {
-    const selectedDate = dateInput.value;
-    const tatkalType = document.getElementById('tatkalTypeSelect').value;
-    
-    if (selectedDate && tatkalType) {
+    function buildSchedule(selectedDate, tatkalType) {
+      if (!selectedDate || !tatkalType) return null;
       const journeyDate = new Date(selectedDate);
       const bookingDate = new Date(journeyDate);
       bookingDate.setDate(bookingDate.getDate() - 1);
-      
-      const bookingTime = tatkalType === 'AC' ? '10:00 AM' : '11:00 AM';
-      const reminderTime = tatkalType === 'AC' ? '9:50 AM' : '10:50 AM';
-      
-      const preview = document.getElementById('reminderPreview');
-      const details = document.getElementById('scheduleDetails');
-      
-      details.innerHTML = `
-        <p><strong>Journey Date:</strong> ${journeyDate.toDateString()}</p>
-        <p><strong>Booking Date:</strong> ${bookingDate.toDateString()}</p>
-        <p><strong>T-10 Reminder:</strong> ${reminderTime} - Get Ready Alert</p>
-        <p><strong>T-0 Alert:</strong> ${bookingTime} - Booking Opens!</p>
+      const { bookingTime, reminderTime } = getTatkalTimes(tatkalType);
+      return { journeyDate, bookingDate, bookingTime, reminderTime };
+    }
+
+    function updateReminderSchedule() {
+      const selectedDate = dateInput.value;
+      const tatkalType = document.getElementById('tatkalTypeSelect').value;
+      const schedule = buildSchedule(selectedDate, tatkalType);
+
+      if (schedule) {
+        const preview = document.getElementById('reminderPreview');
+        const details = document.getElementById('scheduleDetails');
+
+        details.innerHTML = `
+          <p><strong>Journey Date:</strong> ${schedule.journeyDate.toDateString()}</p>
+          <p><strong>Booking Date:</strong> ${schedule.bookingDate.toDateString()}</p>
+          <p><strong>T-10 Reminder:</strong> ${schedule.reminderTime}</p>
+          <p><strong>T-0 Alert:</strong> ${schedule.bookingTime}</p>
+        `;
+
+        preview.style.display = 'block';
+      }
+    }
+
+    dateInput.addEventListener('change', updateReminderSchedule);
+    document.getElementById('tatkalTypeSelect').addEventListener('change', updateReminderSchedule);
+
+    const passengersDiv = document.getElementById('passengers');
+    const addPassengerBtn = document.getElementById('addPassenger');
+    let passengerCount = 0;
+    const MAX_PASSENGERS = 4;
+
+    function addPassenger(p = {}) {
+      if (passengerCount >= MAX_PASSENGERS) {
+        alert("Maximum 4 passengers allowed in Tatkal booking");
+        return;
+      }
+      passengerCount++;
+      const div = document.createElement('div');
+      div.className = 'passenger-card';
+      div.innerHTML = `
+        <h4>Passenger ${passengerCount}</h4>
+        <div class="grid">
+          <div>
+            <label class="required">Full Name (as per ID)</label>
+            <input required name="p_name_${passengerCount}" value="${p.name || ''}" placeholder="Enter full name">
+          </div>
+          <div>
+            <label class="required">Age</label>
+            <input type="number" required name="p_age_${passengerCount}" value="${p.age || ''}" min="5" max="120">
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label class="required">Gender</label>
+            <select name="p_gender_${passengerCount}" required>
+              <option value="">Select Gender</option>
+              <option value="M" ${p.gender == 'M' ? 'selected' : ''}>Male</option>
+              <option value="F" ${p.gender == 'F' ? 'selected' : ''}>Female</option>
+            </select>
+          </div>
+          <div>
+            <label>Berth Preference</label>
+            <select name="p_berth_${passengerCount}">
+              <option value="LB">Lower Berth (LB)</option>
+              <option value="MB">Middle Berth (MB)</option>
+              <option value="UB">Upper Berth (UB)</option>
+              <option value="SL">Side Lower (SL)</option>
+              <option value="SU">Side Upper (SU)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>ID Type</label>
+            <input name="p_idType_${passengerCount}" value="${p.idType || ''}" placeholder="Aadhaar/PAN/Voter ID">
+          </div>
+          <div>
+            <label>ID Number</label>
+            <input name="p_idNumber_${passengerCount}" value="${p.idNumber || ''}" placeholder="Enter ID number">
+          </div>
+        </div>
+        <button type="button" class="btn-danger" onclick="this.parentElement.remove(); passengerCount--;">Remove Passenger</button>
       `;
-      
-      preview.style.display = 'block';
+      passengersDiv.appendChild(div);
     }
-  }
-  
-  dateInput.addEventListener('change', updateReminderSchedule);
-  document.getElementById('tatkalTypeSelect').addEventListener('change', updateReminderSchedule);
+    addPassengerBtn.onclick = () => addPassenger();
 
-  // ====== Check notification settings ======
-  function checkNotificationSettings() {
-    const whatsapp = document.querySelector('input[name="whatsappTo"]').value;
-    const telegram = document.querySelector('input[name="telegramTo"]').value;
-    const alert = document.getElementById('noNotificationAlert');
-    
-    if (!whatsapp && !telegram) {
-      alert.style.display = 'block';
-    } else {
-      alert.style.display = 'none';
+    addPassenger();
+
+    const trainInput = document.getElementById('trainInput');
+    const trainNameLabel = document.getElementById('trainName');
+    trainInput.addEventListener('input', () => {
+      const trainNum = trainInput.value;
+      if (trainNum === "12345") trainNameLabel.textContent = "Howrah Rajdhani Express";
+      else if (trainNum === "12301") trainNameLabel.textContent = "Kolkata Rajdhani Express";
+      else if (trainNum === "12951") trainNameLabel.textContent = "Mumbai Rajdhani Express";
+      else if (trainNum === "12302") trainNameLabel.textContent = "Kolkata Rajdhani Express";
+      else trainNameLabel.textContent = "";
+    });
+
+    document.getElementById('fromInput').addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase();
+    });
+    document.getElementById('toInput').addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase();
+    });
+
+    const out = document.getElementById('out');
+    const responseStatus = document.getElementById('responseStatus');
+    const responseMeta = document.getElementById('responseMeta');
+    const responseBody = document.getElementById('responseBody');
+    const toastStack = document.getElementById('toastStack');
+
+    function showToast(type, title, message, timeout = 3200) {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
+        <div class="toast-title">${title}</div>
+        <div class="toast-body">${message}</div>
+      `;
+      toastStack.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, timeout);
     }
-  }
-  
-  document.querySelector('input[name="whatsappTo"]').addEventListener('input', checkNotificationSettings);
-  document.querySelector('input[name="telegramTo"]').addEventListener('input', checkNotificationSettings);
 
-  // ====== Passengers ======
-  const passengersDiv = document.getElementById('passengers');
-  const addPassengerBtn = document.getElementById('addPassenger');
-  let passengerCount = 0;
-  const MAX_PASSENGERS = 4;
-
-  function addPassenger(p = {}) {
-    if (passengerCount >= MAX_PASSENGERS) {
-      alert("Maximum 4 passengers allowed in Tatkal booking");
-      return;
+    function setResponse(state, meta, bodyHtml) {
+      responseStatus.className = `response-status status-${state}`;
+      responseStatus.textContent = state === 'pending' ? 'Submitting' : state.charAt(0).toUpperCase() + state.slice(1);
+      responseMeta.textContent = meta;
+      responseBody.innerHTML = bodyHtml;
     }
-    passengerCount++;
-    const div = document.createElement('div');
-    div.className = 'passenger-card';
-    div.innerHTML = `
-      <h4>👤 Passenger ${passengerCount}</h4>
-      <div class="grid">
-        <div>
-          <label class="required">Full Name (as per ID)</label>
-          <input required name="p_name_${passengerCount}" value="${p.name || ''}" placeholder="Enter full name">
-        </div>
-        <div>
-          <label class="required">Age</label>
-          <input type="number" required name="p_age_${passengerCount}" value="${p.age || ''}" min="5" max="120">
-        </div>
-      </div>
-      <div class="grid">
-        <div>
-          <label class="required">Gender</label>
-          <select name="p_gender_${passengerCount}" required>
-            <option value="">Select Gender</option>
-            <option value="M" ${p.gender == 'M' ? 'selected' : ''}>Male</option>
-            <option value="F" ${p.gender == 'F' ? 'selected' : ''}>Female</option>
-          </select>
-        </div>
-        <div>
-          <label>Berth Preference</label>
-          <select name="p_berth_${passengerCount}">
-            <option value="LB">Lower Berth (LB)</option>
-            <option value="MB">Middle Berth (MB)</option>
-            <option value="UB">Upper Berth (UB)</option>
-            <option value="SL">Side Lower (SL)</option>
-            <option value="SU">Side Upper (SU)</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid">
-        <div>
-          <label>ID Type</label>
-          <input name="p_idType_${passengerCount}" value="${p.idType || ''}" placeholder="Aadhaar/PAN/Voter ID">
-        </div>
-        <div>
-          <label>ID Number</label>
-          <input name="p_idNumber_${passengerCount}" value="${p.idNumber || ''}" placeholder="Enter ID number">
-        </div>
-      </div>
-      <button type="button" class="remove-btn" onclick="this.parentElement.remove(); passengerCount--;">❌ Remove Passenger</button>
-    `;
-    passengersDiv.appendChild(div);
-  }
-  addPassengerBtn.onclick = () => addPassenger();
 
-  // Auto-add first passenger
-  addPassenger();
+    document.getElementById('f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const submitBtn = e.target.querySelector('button[type="submit"]');
 
-  // ====== Train Lookup ======
-  const trainInput = document.getElementById('trainInput');
-  const trainNameLabel = document.getElementById('trainName');
-  trainInput.addEventListener('input', () => {
-    const trainNum = trainInput.value;
-    if (trainNum === "12345") trainNameLabel.textContent = "Howrah Rajdhani Express";
-    else if (trainNum === "12301") trainNameLabel.textContent = "Kolkata Rajdhani Express";
-    else if (trainNum === "12951") trainNameLabel.textContent = "Mumbai Rajdhani Express";
-    else if (trainNum === "12302") trainNameLabel.textContent = "Kolkata Rajdhani Express";
-    else trainNameLabel.textContent = "";
-  });
+      const passengers = [];
+      for (let i = 1; i <= MAX_PASSENGERS; i++) {
+        if (fd.get(`p_name_${i}`)) {
+          passengers.push({
+            name: fd.get(`p_name_${i}`),
+            age: parseInt(fd.get(`p_age_${i}`)),
+            gender: fd.get(`p_gender_${i}`),
+            berth: fd.get(`p_berth_${i}`),
+            idType: fd.get(`p_idType_${i}`),
+            idNumber: fd.get(`p_idNumber_${i}`)
+          });
+        }
+      }
 
-  // Make station codes uppercase
-  document.getElementById('fromInput').addEventListener('input', (e) => {
-    e.target.value = e.target.value.toUpperCase();
-  });
-  document.getElementById('toInput').addEventListener('input', (e) => {
-    e.target.value = e.target.value.toUpperCase();
-  });
+      if (passengers.length === 0) {
+        alert("Please add at least one passenger");
+        return;
+      }
 
-  // Initialize notification check
-  checkNotificationSettings();
+      const journeyDate = new Date(fd.get('date'));
+      const bookingDate = new Date(journeyDate);
+      bookingDate.setDate(bookingDate.getDate() - 1);
 
-  const out = document.getElementById('out');
-  document.getElementById('f').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const fd = new FormData(e.target);
+      const whatsappTo = fd.get('whatsappTo');
+      const telegramTo = fd.get('telegramTo');
+      const schedule = buildSchedule(fd.get('date'), fd.get('tatkalType'));
 
-    const passengers = [];
-    for (let i = 1; i <= MAX_PASSENGERS; i++) {
-      if (fd.get(`p_name_${i}`)) {
-        passengers.push({
-          name: fd.get(`p_name_${i}`),
-          age: parseInt(fd.get(`p_age_${i}`)),
-          gender: fd.get(`p_gender_${i}`),
-          berth: fd.get(`p_berth_${i}`),
-          idType: fd.get(`p_idType_${i}`),
-          idNumber: fd.get(`p_idNumber_${i}`)
+      const channelLabel = whatsappTo && telegramTo
+        ? 'WhatsApp + Telegram'
+        : whatsappTo
+          ? 'WhatsApp'
+          : telegramTo
+            ? 'Telegram'
+            : 'None';
+      const channelNote = channelLabel === 'None'
+        ? '<div class="response-item">No channels selected yet. Add WhatsApp or Telegram to receive reminders.</div>'
+        : '';
+
+      setResponse(
+        'pending',
+        'Submitting reminder request...',
+        `
+          <div class="response-item"><strong>Notification channels:</strong> ${channelLabel}</div>
+          <div class="response-item"><strong>T-10 Reminder:</strong> ${schedule ? schedule.reminderTime : '—'}</div>
+          <div class="response-item"><strong>T-0 Alert:</strong> ${schedule ? schedule.bookingTime : '—'}</div>
+          ${channelNote}
+        `
+      );
+      showToast('info', 'Submitting', 'Sending your reminder request...');
+
+      const payload = {
+        date: fd.get('date'),
+        train: fd.get('train'),
+        from: fd.get('from').toUpperCase(),
+        to: fd.get('to').toUpperCase(),
+        class: fd.get('class'),
+        tatkalType: fd.get('tatkalType'),
+        passengers,
+        notifications: {
+          whatsapp: whatsappTo || null,
+          telegram: telegramTo || null
+        },
+        bookingDate: bookingDate.toISOString().split('T')[0],
+        reminderScheduled: true
+      };
+
+      out.textContent = JSON.stringify(payload, null, 2);
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Scheduling...';
+        const res = await fetch(`${API_BASE}/api/tatkal`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
+        const data = await res.json();
+        console.log("Reminders scheduled:", data);
+
+        const successMeta = "Reminders scheduled successfully.";
+        const scheduleNote = schedule
+          ? `Booking on ${schedule.bookingDate.toDateString()} · T-10 at ${schedule.reminderTime} · T-0 at ${schedule.bookingTime}`
+          : 'Schedule details will appear once you select date and Tatkal type.';
+        const successChannelNote = channelLabel === 'None'
+          ? 'No channels configured yet. Add WhatsApp or Telegram to receive the reminders.'
+          : '';
+
+        setResponse(
+          'success',
+          successMeta,
+          `
+            <div class="response-item"><strong>Channels:</strong> ${channelLabel}</div>
+            <div class="response-item">${scheduleNote}</div>
+            ${successChannelNote ? `<div class="response-item">${successChannelNote}</div>` : ''}
+          `
+        );
+        showToast('success', 'Scheduled', 'T-10 and T-0 reminders are set.');
+      } catch (err) {
+        console.error("API error", err);
+        setResponse(
+          'error',
+          'Error scheduling reminders. Please try again.',
+          `<div class="response-item">If the issue persists, check your API base or network connection.</div>`
+        );
+        showToast('error', 'Failed', 'Could not schedule reminders. Try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Schedule Tatkal Reminders';
       }
-    }
 
-    // Check if at least one passenger exists
-    if (passengers.length === 0) {
-      alert("❌ Please add at least one passenger");
-      return;
-    }
-
-    const journeyDate = new Date(fd.get('date'));
-    const bookingDate = new Date(journeyDate);
-    bookingDate.setDate(bookingDate.getDate() - 1);
-    
-    const whatsappTo = fd.get('whatsappTo');
-    const telegramTo = fd.get('telegramTo');
-    
-    const payload = {
-      date: fd.get('date'),
-      train: fd.get('train'),
-      from: fd.get('from').toUpperCase(),
-      to: fd.get('to').toUpperCase(),
-      class: fd.get('class'),
-      tatkalType: fd.get('tatkalType'),
-      passengers,
-      whatsappTo: telegramTo || whatsappTo || null, // Map telegram/whatsapp to backend field
-      notifications: {
-        whatsapp: whatsappTo || null,
-        telegram: telegramTo || null
-      },
-      bookingDate: bookingDate.toISOString().split('T')[0],
-      reminderScheduled: true
-    };
-
-    // show JSON on screen
-    out.textContent = JSON.stringify(payload, null, 2);
-
-    // === send to backend ===
-    try {
-      const res = await fetch("/api/tatkal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      console.log("Reminders scheduled:", data);
-      
-      let successMessage = "✅ Tatkal reminders scheduled successfully!";
-      if (whatsappTo && telegramTo) {
-        successMessage += " You'll receive alerts on both WhatsApp and Telegram.";
-      } else if (whatsappTo) {
-        successMessage += " You'll receive WhatsApp alerts.";
-      } else if (telegramTo) {
-        successMessage += " You'll receive Telegram alerts.";
-      } else {
-        successMessage += " No notification methods configured - reminders saved without alerts.";
-      }
-      
-      alert(successMessage);
-    } catch(err) {
-      console.error("API error", err);
-      alert("❌ Error scheduling reminders. Please try again.");
-    }
-
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      e.target.reset();
-      passengersDiv.innerHTML = "";
-      passengerCount = 0;
-      addPassenger(); // Add first passenger again
-      document.getElementById('reminderPreview').style.display = 'none';
-      checkNotificationSettings();
-    }, 3000);
-  });
-</script>
+      setTimeout(() => {
+        e.target.reset();
+        passengersDiv.innerHTML = "";
+        passengerCount = 0;
+        addPassenger();
+        document.getElementById('reminderPreview').style.display = 'none';
+        setResponse('idle', 'Fill the form to schedule reminders.', '<div class="response-item">Waiting for submission.</div>');
+      }, 3000);
+    });
+  </script>
+</body>
+</html>

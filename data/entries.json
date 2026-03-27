@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "id": "T1774597171411",
+    "date": "2026-03-28",
+    "train": "12561",
+    "from": "NDLS",
+    "to": "SMI",
+    "class": "1A",
+    "tatkalType": "AC",
+    "passengers": [
+      {
+        "name": "Vimlesh Kumar",
+        "age": 23,
+        "gender": "M",
+        "berth": "LB",
+        "idType": "",
+        "idNumber": ""
+      }
+    ],
+    "whatsappTo": null,
+    "notifications": {
+      "whatsapp": null,
+      "telegram": null
+    }
+  },
+  {
+    "id": "T1774597860739",
+    "date": "2026-03-28",
+    "train": "12561",
+    "from": "NDLS",
+    "to": "CNB",
+    "class": "2A",
+    "tatkalType": "AC",
+    "passengers": [
+      {
+        "name": "Idiot",
+        "age": 26,
+        "gender": "M",
+        "berth": "LB",
+        "idType": "",
+        "idNumber": ""
+      }
+    ],
+    "whatsappTo": null,
+    "notifications": {
+      "whatsapp": null,
+      "telegram": null
+    }
+  }
+]
